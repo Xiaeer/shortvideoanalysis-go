@@ -1,0 +1,141 @@
+{{ define "shortvideo/parseshortvideo.html" }}
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        .content {
+            width: 45%;
+            height: 134px;
+            /* background: orange; */
+            margin: 0 auto;
+            text-align: center;
+            vertical-align: middle;
+            /*脱离文档流*/
+            position: relative;
+            /*偏移*/
+            top: 40%;
+            font-size: 0px;
+        }
+
+        input {
+            width: 75%;
+            height: 60px;
+            padding: 0px 0px;
+            padding-left: 8px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+            box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075);
+            -webkit-transition: border-color ease-in-out .15s, -webkit-box-shadow ease-in-out .15s;
+            -o-transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+            transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+            font-size: 1.3rem;
+        }
+
+        input[class="focus"]:focus {
+            border-color: #66afe9;
+            outline: 0;
+            -webkit-box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px rgba(102, 175, 233, .6);
+            box-shadow: inset 0 1px 1px rgba(0, 0, 0, .075), 0 0 8px rgba(102, 175, 233, .6)
+        }
+
+        button {
+            width: 20%;
+            height: 62px;
+            background-color: #428bca;
+            border-color: #357ebd;
+            color: #fff;
+            border: 1px solid transparent;
+            -moz-border-radius: 10px;
+            -webkit-border-radius: 10px;
+            border-radius: 10px;
+            -khtml-border-radius: 10px;
+            font-weight: 500;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="content">
+        <input type="text" class="focus" placeholder="请将APP里复制的视频链接粘贴到这里" id="parseUrl" />
+        <button type="button" onclick="parseShortVideoByUrl()">解析</button>
+        <br />
+        <input type="text" id="realUrl" placeholder="短视频链接解析后的真实地址" readonly="readonly"
+            style="margin-top: 10px; width: 95%; background-color: #9982ce; color: white;" />
+    </div>
+
+    <script>
+
+        function parseShortVideoByUrl() {
+            parseUrl = document.getElementById("parseUrl").value;
+            let pattern = /^https:\/\/h5\.weishi\.qq\.com\/weishi\/feed\/[\d\w]+\//;
+            if (!pattern.test(parseUrl)) {
+                alert("短链接无效！请检查");
+                return;
+            }
+            Ajax.post("parseshortvideobyurl", formatFormData({ "parse_url": parseUrl }), function () {
+                // console.log(this);
+                var jsonData = JSON.parse(this);
+                document.getElementById("realUrl").value = jsonData.real_url;
+            });
+
+        }
+
+        function formatFormData(data) {
+            // Do whatever you want to transform the data
+            let res = '';
+            for (let item in data) {
+                res += encodeURIComponent(item) + '=' + encodeURIComponent(data[item]) + '&';
+            }
+            // 删除最后一个&
+            return res.slice(0, -1);
+        }
+
+        var Ajax = {
+            get: function (url, fn) {
+                // XMLHttpRequest对象用于在后台与服务器交换数据
+                var xhr = new XMLHttpRequest();
+                xhr.open('GET', url, true);
+                xhr.onreadystatechange = function () {
+                    // readyState == 4说明请求已完成
+                    if (xhr.readyState == 4) {
+                        if (xhr.status == 200 || xhr.status == 304) {
+                            console.log(xhr.responseText);
+                            fn.call(xhr.responseText);
+                        }
+                    }
+                }
+                xhr.send();
+            },
+            // data应为'a=a1&b=b1'这种字符串格式，在jq里如果data为对象会自动将对象转成这种字符串格式，原生js需要自己处理（formatFormData）
+            post: function (url, data, fn) {
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', url, true);
+                // 添加http头，发送信息至服务器时内容编码类型
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState == 4) {
+                        if (xhr.status == 200 || xhr.status == 304) {
+                            // console.log(xhr.responseText);
+                            fn.call(xhr.responseText);
+                        }
+                    }
+                }
+                xhr.send(data);
+            }
+        }
+    </script>
+</body>
+
+</html>
+{{ end }}
